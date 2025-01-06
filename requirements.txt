@@ -1,0 +1,6 @@
+chainlit
+neo4j
+python-dotenv
+langchain-core
+langchain-openai
+langchain-neo4j
