@@ -13,7 +13,7 @@ examples = [
     },
     {
         "question": "How many zones does the DataCenter contain?",
-        "query": "MATCH (dc:DataCenter {name:'DC1'})-[:CONTAINS]->(:Router)-[:ROUTES]->(:Interface)-[:CONNECTS]->(nr:Network:Zone) RETURN COUNT(nr) AS zoneCount;"
+        "query": "MATCH (dc:DataCenter {name:'DC1'})-[:CONTAINS]->(:Router)-[:ROUTES]->(:Interface)-[:CONNECTS]->(nr:NetworkZone) RETURN COUNT(nr) AS zoneCount;"
     },
     {
         "question": "List the racks and their corresponding switches in each zone.",
@@ -37,10 +37,49 @@ examples = [
     },
     {
         "question": "Which machines need an OS update for Debian 8-Jessie?",
-        "query": "MATCH (os:OS:Software)-[:VERSION]->(newVersion) WHERE os.name = 'Debian' AND newVersion.name = '8-Jessie' MATCH (m:Machine)-[:RUNS]->(:OS:Process)-[:INSTANCE]->(currentVersion) WHERE (currentVersion)<-[:PREVIOUS*]-(newVersion) RETURN m.name AS Machine;"
+        "query": "MATCH (os:OS:Software)-[:VERSION]->(newVersion) WHERE os.name = 'Debian' AND newVersion.name = '8-Jessie' MATCH (m:Machine)-[:RUNS]->(:OSProcess)-[:INSTANCE]->(currentVersion) WHERE (currentVersion)<-[:PREVIOUS*]-(newVersion) RETURN m.name AS Machine;"
+    },
+    {
+        "question": "What software applications depend on a specific service?",
+        "query": "MATCH (app:SoftwareApplication)-[:DEPENDS_ON]->(service:SoftwareService) WHERE service.name = 'nombre_del_servicio' RETURN app.name;"
+    },
+    {
+        "question": "What machines run service processes?",
+        "query": "MATCH (machine:Machine)-[:RUNS]->(process:ServiceProcess) RETURN machine.name, process.name;"
+    },
+    {
+        "question": "What interfaces are exposed on a specific machine?",
+        "query": "MATCH (machine:Machine)-[:RUNS]->(:ServiceProcess)-[:EXPOSES]->(interface:Interface) WHERE machine.name = 'nombre_de_la_maquina' RETURN interface.name;"
+    },
+    {
+        "question": "What software or services depend on a specific version?",
+        "query": "MATCH (entity)-[:DEPENDS_ON]->(version:Version) WHERE version.name = 'nombre_de_la_version' RETURN entity.name;"
+    },
+    {
+        "question": "What ports are being listened to by application processes in a specific network zone?",
+        "query": "MATCH (zone:NetworkZone)<-[:CONNECTS]-(interface:Interface)<-[:LISTENS]-(process:ApplicationProcess)-[:LISTENS]->(port:Port) WHERE zone.name = 'nombre_de_la_zona_de_red' RETURN port.name;"
+    },
+    {
+        "question": "What racks and switches are contained in a specific DataCenter?",
+        "query": "MATCH (datacenter:DataCenter)-[:CONTAINS]->(rack:Rack)-[:HOLDS]->(switch:Switch) WHERE datacenter.name = 'nombre_del_centro_de_datos' RETURN rack.name, switch.name;"
+    },
+    {
+        "question": "What OS processes are running on machines of a certain type?",
+        "query": "MATCH (machine:Machine)-[:RUNS]->(process:OSProcess) WHERE machine.type = 'tipo_de_maquina' RETURN process.name;"
+    },
+    {
+        "question": "What routes are configured between routers and switches in the network?",
+        "query": "MATCH (router:Router)-[:ROUTES]->(switch:Switch) RETURN router.name, switch.name;"
+    },
+    {
+        "question": "What services depend on other services?",
+        "query": "MATCH (service1:SoftwareService)-[:DEPENDS_ON]->(service2:SoftwareService) RETURN service1.name, service2.name;"
+    },
+    {
+        "question": "What ports are associated with software applications?",
+        "query": "MATCH (app:SoftwareApplication)-[:INSTANCE]->(:ApplicationProcess)-[:LISTENS]->(port:Port) RETURN app.name, port.name;"
     }
 ]
-
 
 example_selector = SemanticSimilarityExampleSelector.from_examples(
     examples, OpenAIEmbeddings(), Neo4jVector, k=5, input_keys=["question"]

@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
 load_dotenv()
 from .states import InputState, OutputState, OverallState
-from .nodes import guardrails, generate_cypher, validate_cypher, correct_cypher, execute_cypher, generate_final_answer
-from .routers import guardrails_condition, validate_cypher_condition 
+from .nodes import guardrails, generate_cypher, execute_cypher, generate_final_answer
+from .routers import guardrails_condition 
 from langgraph.graph import END, START, StateGraph
 from langgraph.checkpoint.memory import MemorySaver
 
@@ -10,8 +10,6 @@ from langgraph.checkpoint.memory import MemorySaver
 neo4j_graph_builder = StateGraph(OverallState, input=InputState, output=OutputState)
 neo4j_graph_builder.add_node(guardrails)
 neo4j_graph_builder.add_node(generate_cypher)
-neo4j_graph_builder.add_node(validate_cypher)
-neo4j_graph_builder.add_node(correct_cypher)
 neo4j_graph_builder.add_node(execute_cypher)
 neo4j_graph_builder.add_node(generate_final_answer)
 
@@ -20,13 +18,8 @@ neo4j_graph_builder.add_conditional_edges(
     "guardrails",
     guardrails_condition,
 )
-neo4j_graph_builder.add_edge("generate_cypher", "validate_cypher")
-neo4j_graph_builder.add_conditional_edges(
-    "validate_cypher",
-    validate_cypher_condition,
-)
+neo4j_graph_builder.add_edge("generate_cypher", "execute_cypher")
 neo4j_graph_builder.add_edge("execute_cypher", "generate_final_answer")
-neo4j_graph_builder.add_edge("correct_cypher", "validate_cypher")
 neo4j_graph_builder.add_edge("generate_final_answer", END)
 
 checkpointer = MemorySaver()
